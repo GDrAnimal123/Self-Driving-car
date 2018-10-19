@@ -42,4 +42,4 @@ python model.py -d data -p model
 
 ## Credits
 - Credits go to [naokishibuya](https://github.com/naokishibuya/car-behavioral-cloning).
-- Checkout [Siraj](https://www.youtube.com/watch?v=EaY5QiZwSP4&feature=youtu.be) with his amazing tutorials on how to get started.
+- Checkout [Siraj channel](https://www.youtube.com/channel/UCWN3xxRkmTPmbKwht9FuE5A) to get started with Machine Learning and AI.
