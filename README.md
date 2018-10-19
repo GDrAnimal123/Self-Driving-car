@@ -29,6 +29,7 @@ python drive.py model/model-007-0.0069.h5
 ### To train the model
 
 You need to download [Udacity's Self-Driving Car Simulator](https://github.com/udacity/self-driving-car-sim) to generate training data
+
 Checkout [Siraj](https://www.youtube.com/watch?v=EaY5QiZwSP4&feature=youtu.be) on how to get started with the environment.
 
 After following his video, you should get a ** data ** folder that store all the images and driving logs
