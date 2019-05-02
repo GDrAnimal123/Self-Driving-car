@@ -1,0 +1,24 @@
+(DONE) 1. Error in our agent fit() => Fix critic update match the math formula instead of using Felix's example
+2. Create function to draw graph comparing between pixel and probability of taking action (graph)
+
+Note:
+- Actor-Critic method requires more weights and biases to be tuned => longer training time
+- Inconsistent rewards compare to DDQN since it is likely to converge at sub-optimal solution.
+- Learning online (A2C) is very unstable for more difficult RL tasks
+GOOD practice:
+- Use replay memory or mini-batches(used)
+
+BAD practice:
+- increase the negative rewards NOT work
+=> Reason: when we discount our rewards, it remains negative
+=> Discount reward(-100 rewards): [-68.58863868 -70.29155422 -72.01167093 -73.74916255 -75.5042046
+                                   -77.27697434 -79.06765085 -80.876415 -82.7034495 -84.54893889
+                                   -86.41306958 -88.29602988 -90.19800998]
+
+- Using our agent to predict value(future reward) of the next state can produce noises or inaccuracies
+since our agent still needs to be trained (sub-optimal).
+Discount reward(produced by agent): [0.20914994 0.48733112 0.77624834 1.0768799 0.843116 1.1498051 0.92270947 1.236196 1.5631185 1.3591936 1.6957633 2.0471046 -100]
+
+- Too low learning NOT work
+=> Reason: the model is not exploring the enviroment enough and cause underfitting.
+=> Result: Dense(24) - 0.0001lr
