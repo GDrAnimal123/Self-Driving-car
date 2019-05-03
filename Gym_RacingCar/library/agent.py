@@ -3,6 +3,7 @@ import numpy as np
 from collections import deque
 
 from library.policy import GreedyQPolicy, EpsGreedyQPolicy
+from utils import save_plot, normalize, standardize
 
 
 class A2CAgent():
@@ -45,6 +46,14 @@ class A2CAgent():
         self.batch_size = batch_size
         self.observe = observe
 
+        # Performance Statistics
+        self.stats_window_size = 50  # window size for computing rolling statistics
+        self.mavg_score = []  # Moving Average of Reward
+        self.var_score = []  # Variance of Reward
+        self.mavg_best_value = []  # Moving Average of Value produced by Critic
+        self.mavg_critic_loss = []  # Moving Average of Critic loss
+        self.mavg_actor_loss = []  # Moving Average of Actor loss
+
     # Instead of using our agent to predict value(future reward)
     # of the next state which can produce noises or inaccuracies
     # since our agent is still training (sub-optimal).
@@ -64,7 +73,9 @@ class A2CAgent():
         episode_length = len(self.states)
 
         # These targets are used for optimization step.
-        discount_rewards = self.discount_rewards(self.rewards)
+        discounted_rewards = self.discount_rewards(self.rewards)
+        # Standardized discounted rewards
+        discounted_rewards = standardize(discounted_rewards)
         advantages = np.zeros((episode_length, self.action_size))
 
         # Create inputs for our model (not crucial but it helps
@@ -78,7 +89,7 @@ class A2CAgent():
         values = self.critic.predict(update_input)
 
         for i in range(episode_length):
-            advantages[i][self.actions[i]] = discount_rewards[i] - values[i]
+            advantages[i][self.actions[i]] = discounted_rewards[i] - values[i]
 
         # Refer to "https://medium.freecodecamp.org/an-intro-to-advantage-actor-critic-methods-lets-play-sonic-the-hedgehog-86d6240171d"
 
@@ -86,12 +97,12 @@ class A2CAgent():
         actor_loss = self.actor.fit(update_input, advantages,
                                     batch_size=self.batch_size, epochs=1, verbose=0)
         # Critic use MSE its predicted value (value)
-        critic_loss = self.critic.fit(update_input, discount_rewards,
+        critic_loss = self.critic.fit(update_input, discounted_rewards,
                                       batch_size=self.batch_size, epochs=1, verbose=0)
 
         self.states, self.actions, self.rewards = [], [], []
 
-        return np.max(values), actor_loss, critic_loss
+        return values, actor_loss.history['loss'], critic_loss.history['loss']
 
     # using the output of policy network, pick action stochastically (Stochastic Policy)
     def act(self, state):
@@ -117,14 +128,13 @@ class A2CAgent():
         self.actions.append(action)
         self.rewards.append(reward)
 
-    # Unnecessary
-    def load_weights(self, actor_path, critic_path):
-        self.actor.load_weights(actor_path)
-        self.critic.load_weights(critic_path)
+    def save_weights(self, name):
+        self.actor.save_weights(name + "_actor.h5", overwrite=True)
+        self.critic.save_weights(name + "_critic.h5", overwrite=True)
 
-    def save_weights(self, actor_path, critic_path):
-        self.actor.save_weights(actor_path)
-        self.critic.save_weights(critic_path)
+    def load_weights(self, name):
+        self.actor.load_weights(name + "_actor.h5", overwrite=True)
+        self.critic.load_weights(name + "_critic.h5", overwrite=True)
 
 
 class DQNAgent():

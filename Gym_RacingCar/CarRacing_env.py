@@ -1,6 +1,7 @@
 import numpy as np
 import gym
 import time
+from gym.wrappers.monitor import Monitor
 
 env_name = "CarRacing-v0"
 UP, DOWN, LEFT, RIGHT = 0, 1, 2, 3
@@ -66,11 +67,8 @@ def decode_action(action_index):
     return a
 
 
-def render(env, agent, record=True):
-    if record:
-        from gym.wrappers.monitor import Monitor
-        env = Monitor(env, './video-test/{}'.format(int(time.time())), force=True)
-
+def render(env, agent, name="", record=True):
+    env = Monitor(env, './video-test/{}'.format(name), force=True, mode="evaluation")
     for i_episode in range(1):
         state = env.reset()
         total_reward = 0
@@ -82,10 +80,11 @@ def render(env, agent, record=True):
             action = decode_action(action_index)
 
             next_state, reward, done, info = env.step(action)
-            if done or step % STEPS == 0:
-                print("Episode finished after {} timesteps and total reward {}".format(step + 1, total_reward))
+            if done:
                 break
             state = next_state
             total_reward += reward
+
+        print("Episode achieves total reward {}".format(total_reward))
 
     # env.close()
