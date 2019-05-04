@@ -1,7 +1,7 @@
 from keras.models import Sequential
 from keras.layers import Dense, Dropout, Flatten
 from keras.layers import Conv2D, MaxPooling2D, BatchNormalization, Activation
-from keras.optimizers import Adam
+from keras.optimizers import Adam, RMSprop
 
 
 class Network(object):
@@ -27,7 +27,7 @@ class Network(object):
         return model
 
     @staticmethod
-    def actor_network(state_size, action_size, learning_rate):
+    def actor_network(state_size, action_size, optimizer=RMSprop(lr=7e-4)):
         """Actor Network for A2C
         """
 
@@ -49,14 +49,13 @@ class Network(object):
         model.add(Activation('relu'))
         model.add(Dense(action_size, activation='softmax'))
 
-        adam = Adam(lr=learning_rate)
-        model.compile(loss='categorical_crossentropy', optimizer=adam)
+        model.compile(loss='categorical_crossentropy', optimizer=optimizer)
         # model.summary()
 
         return model
 
     @staticmethod
-    def critic_network(state_size, value_size, learning_rate):
+    def critic_network(state_size, value_size, optimizer=RMSprop(lr=7e-4)):
         """Critic Network for A2C
         """
 
@@ -78,8 +77,7 @@ class Network(object):
         model.add(Activation('relu'))
         model.add(Dense(value_size, activation='linear'))
 
-        adam = Adam(lr=learning_rate)
-        model.compile(loss='mse', optimizer=adam)
+        model.compile(loss='mse', optimizer=optimizer)
         # model.summary()
 
         return model

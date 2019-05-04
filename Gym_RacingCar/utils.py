@@ -22,3 +22,12 @@ def standardize(x):
 
 def normalize(x):
     return (x - np.min(x)) / (np.max(x) - np.min(x))
+
+
+def read_json(fname):
+    import pandas
+    ds = []
+    with open(fname, 'rt') as fh:
+        for line in fh:
+            ds.append(json.loads(line))
+    return pandas.DataFrame(ds)

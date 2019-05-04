@@ -12,7 +12,7 @@ from keras import backend as K
 from keras.models import Model, Sequential
 from keras.layers import Input, Dense, Dropout, Flatten
 from keras.layers import Conv2D, MaxPooling2D, BatchNormalization, Activation
-from keras.optimizers import Adam
+from keras.optimizers import Adam, RMSprop
 
 from library.network import Network
 from library.agent import A2CAgent
@@ -22,12 +22,16 @@ import CarRacing_env as environment
 from CarRacing_env import render, encode_action, decode_action
 
 env_name = environment.env_name
-EPISODES = 1_000_000
-STEPS = 500
+EPISODES = 100_000
+STEPS = 200
+# total_timesteps = int(80e6)
 
 scores, best_values, losses, actor_losses, critic_losses = [], [], [], [], []
 
 if __name__ == "__main__":
+
+    # Setup environment
+    env = environment.env
 
     # Avoid Tensorflow eats up GPU memory
     config = tf.ConfigProto()
@@ -43,12 +47,13 @@ if __name__ == "__main__":
     value_size = 1
 
     # Variables for A2C model
-    batch_size = 128
-    actor_lr = 0.001
-    critic_lr = 0.005
+    nenvs = 1
+    batch_size = nenvs * STEPS
 
-    actor_model = Network.actor_network(state_size, action_size, actor_lr)
-    critic_model = Network.critic_network(state_size, value_size, critic_lr)
+    lr = 7e-4  # (7 * 10^-4) = 0.0007
+    optimizer = RMSprop(lr=lr, epsilon=1e-5, decay=0.99, clipvalue=0.5)
+    actor_model = Network.actor_network(state_size, action_size, optimizer)
+    critic_model = Network.critic_network(state_size, value_size, optimizer)
 
     agent = A2CAgent(actor_model, critic_model, state_size, action_size, value_size,
                      observe=0, batch_size=batch_size, gamma=.99)
@@ -58,8 +63,6 @@ if __name__ == "__main__":
     t = 0
     max_reward = 0  # Maximum episode life (Proxy for agent performance)
 
-    # Setup environment
-    env = environment.env
     """Warp frames to custom (width, height)."""
     env = WarpFrame(env, width=img_rows, height=img_cols, grayscale=True)
     """Stack k last frames"""
@@ -98,7 +101,7 @@ if __name__ == "__main__":
 
             if t % 10000 == 0:
                 print("Saving model at episode {}".format(episode))
-                # agent.save_weights(name="savepoint/{}-{}episode".format(env_name, episode))
+                agent.save_weights(name="savepoint/{}-{}episode".format(env_name, episode))
 
             if (done and t > agent.observe):
                 # Every episode, agent learns from sample returns
@@ -132,12 +135,12 @@ if __name__ == "__main__":
                     save_plot(n_steps, agent.mavg_score, './save_graph/avg_reward_by_ep.png', "Step", "Average Scores")
                     save_plot(n_steps, agent.var_score, './save_graph/var_reward_by_ep.png', "Step", "Variance Scores")
                     save_plot(n_steps, agent.mavg_best_value, './save_graph/best_value_by_ep.png', "Step", "Best Value")
-                    save_plot(n_steps, agent.mavg_critic_loss[5:], './save_graph/actor_loss_by_ep.png', "Step", "Actor Loss")
-                    save_plot(n_steps, agent.mavg_actor_loss[5:], './save_graph/critic_loss_by_ep.png', "Step", "Critic Loss")
+                    save_plot(n_steps[10:], agent.mavg_critic_loss[10:], './save_graph/actor_loss_by_ep.png', "Step", "Actor Loss")
+                    save_plot(n_steps[10:], agent.mavg_actor_loss[10:], './save_graph/critic_loss_by_ep.png', "Step", "Critic Loss")
 
                     with open("statistics/a2c_stats.txt", "w") as stats_file:
                         stats_file.write('Game: ' + str(episode) + '\n')
-                        stats_file.write('Actor lr: ' + str(actor_lr) + '-' + 'Critic lr: ' + str(critic_lr) + '\n')
+                        stats_file.write('Learning rate: ' + str(lr) + '\n')
                         stats_file.write('Max Score: ' + str(max_reward) + '\n')
                         stats_file.write('mavg_score: ' + str(agent.mavg_score) + '\n')
                         stats_file.write('var_score: ' + str(agent.var_score) + '\n')

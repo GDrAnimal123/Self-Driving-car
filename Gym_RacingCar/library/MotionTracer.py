@@ -1,2 +1,0 @@
-class MotionTracer(object):
-    pass

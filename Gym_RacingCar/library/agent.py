@@ -141,7 +141,7 @@ class DQNAgent():
     # All the mechanic of DQN (separated from Keras model)
     def __init__(self, model, state_size, action_size, memory_size,
                  batch_size=64, policy=None, test_policy=None,
-                 gamma=.99, training=True, target_model_update=0):
+                 gamma=.99):
         """
         # Arguments
             :param model:
