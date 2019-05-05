@@ -67,9 +67,10 @@ def decode_action(action_index):
     return a
 
 
-def render(env, agent, name="", record=True):
-    env = Monitor(env, './video-test/{}'.format(name), force=True, mode="evaluation")
-    for i_episode in range(1):
+def render(env, agent, name="", record=False):
+    if record:
+        env = Monitor(env, './video-test/{}'.format(name), force=True, mode="evaluation")
+    for i_episode in range(5):
         state = env.reset()
         total_reward = 0
         for step, _ in enumerate(range(STEPS), start=1):

@@ -23,7 +23,8 @@ from CarRacing_env import render, encode_action, decode_action
 
 env_name = environment.env_name
 EPISODES = 100_000
-STEPS = 200
+STEPS = 400
+
 # total_timesteps = int(80e6)
 
 scores, best_values, losses, actor_losses, critic_losses = [], [], [], [], []
@@ -50,7 +51,8 @@ if __name__ == "__main__":
     nenvs = 1
     batch_size = nenvs * STEPS
 
-    lr = 7e-4  # (7 * 10^-4) = 0.0007
+    # lr = 7e-4  # (7 * 10^-4) = 0.0007
+    lr = 7e-3
     optimizer = RMSprop(lr=lr, epsilon=1e-5, decay=0.99, clipvalue=0.5)
     actor_model = Network.actor_network(state_size, action_size, optimizer)
     critic_model = Network.critic_network(state_size, value_size, optimizer)
@@ -67,6 +69,13 @@ if __name__ == "__main__":
     env = WarpFrame(env, width=img_rows, height=img_cols, grayscale=True)
     """Stack k last frames"""
     env = FrameStack(env, img_channels)
+
+    SAVED_EPISODE = 3740
+    try:
+        print("Loading pretrain model....")
+        agent.load_weights("savepoint/CarRacing-v0-{}episode".format(SAVED_EPISODE))
+    except Exception as error:
+        print(error.strerror)
 
     for episode, _ in enumerate(range(EPISODES), start=1):
 
@@ -99,9 +108,9 @@ if __name__ == "__main__":
             total_reward += reward
             t += 1
 
-            if t % 10000 == 0:
-                print("Saving model at episode {}".format(episode))
-                agent.save_weights(name="savepoint/{}-{}episode".format(env_name, episode))
+            if episode % 200 == 0:
+                print("Saving model at episode {}".format(SAVED_EPISODE + episode))
+                agent.save_weights(name="savepoint/{}-{}episode".format(env_name, SAVED_EPISODE + episode))
 
             if (done and t > agent.observe):
                 # Every episode, agent learns from sample returns
@@ -125,6 +134,7 @@ if __name__ == "__main__":
 
                 # every episode, plot the statistic
                 if episode % agent.stats_window_size == 0 and t > agent.observe:
+                    print("SAVE STATISTICS...")
                     agent.mavg_score.append(np.mean(np.array(scores)))
                     agent.var_score.append(np.var(np.array(scores)))
                     agent.mavg_best_value.append(np.mean(np.array(best_values)))
@@ -135,8 +145,8 @@ if __name__ == "__main__":
                     save_plot(n_steps, agent.mavg_score, './save_graph/avg_reward_by_ep.png', "Step", "Average Scores")
                     save_plot(n_steps, agent.var_score, './save_graph/var_reward_by_ep.png', "Step", "Variance Scores")
                     save_plot(n_steps, agent.mavg_best_value, './save_graph/best_value_by_ep.png', "Step", "Best Value")
-                    save_plot(n_steps[10:], agent.mavg_critic_loss[10:], './save_graph/actor_loss_by_ep.png', "Step", "Actor Loss")
-                    save_plot(n_steps[10:], agent.mavg_actor_loss[10:], './save_graph/critic_loss_by_ep.png', "Step", "Critic Loss")
+                    save_plot(n_steps[1:], agent.mavg_critic_loss[1:], './save_graph/actor_loss_by_ep.png', "Step", "Actor Loss")
+                    save_plot(n_steps[1:], agent.mavg_actor_loss[1:], './save_graph/critic_loss_by_ep.png', "Step", "Critic Loss")
 
                     with open("statistics/a2c_stats.txt", "w") as stats_file:
                         stats_file.write('Game: ' + str(episode) + '\n')
